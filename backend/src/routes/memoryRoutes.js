@@ -1,15 +1,17 @@
 const express = require("express");
 const multer = require("multer");
+const path = require("path");
 
 const authMiddleware = require("../middleware/authMiddleware");
-const { uploadMemory } = require("../controllers/memoryController");
+
+const {
+  getMemories,
+  uploadMemory,
+  updateMemory,
+  deleteMemory,
+} = require("../controllers/memoryController");
 
 const router = express.Router();
-
-
-// =========================
-// MULTER CONFIGURATION
-// =========================
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -18,21 +20,39 @@ const storage = multer.diskStorage({
 
   filename: (req, file, cb) => {
     const uniqueName =
-      Date.now() + "-" + file.originalname;
+      Date.now() +
+      "-" +
+      Math.round(Math.random() * 1e9) +
+      path.extname(file.originalname);
 
     cb(null, uniqueName);
-  }
+  },
 });
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files are allowed"));
+  }
+};
 
 const upload = multer({
-  storage: storage
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
 });
 
+// GET memories
+router.get(
+  "/",
+  authMiddleware,
+  getMemories
+);
 
-// =========================
-// UPLOAD MEMORY
-// =========================
-
+// UPLOAD memory
 router.post(
   "/upload",
   authMiddleware,
@@ -40,5 +60,18 @@ router.post(
   uploadMemory
 );
 
+// UPDATE memory
+router.put(
+  "/:id",
+  authMiddleware,
+  updateMemory
+);
+
+// DELETE memory
+router.delete(
+  "/:id",
+  authMiddleware,
+  deleteMemory
+);
 
 module.exports = router;

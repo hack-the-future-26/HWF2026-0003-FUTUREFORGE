@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const pool = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
@@ -8,24 +9,27 @@ const authMiddleware = require("./middleware/authMiddleware");
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// AUTH ROUTES
-app.use("/api/auth", authRoutes);
+// Serve uploaded memory images
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../uploads"))
+);
 
-// MEMORY ROUTES
+// API routes
+app.use("/api/auth", authRoutes);
 app.use("/api/memories", memoryRoutes);
 
-// BASIC TEST ROUTE
+// Root route
 app.get("/", (req, res) => {
   res.json({
     message: "Digital Memory Vault API is running"
   });
 });
 
-// DATABASE HEALTH CHECK
+// Database health check
 app.get("/api/health", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -45,7 +49,7 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// PROTECTED TEST ROUTE
+// Protected test route
 app.get("/api/protected", authMiddleware, (req, res) => {
   res.json({
     message: "Protected route accessed successfully",
@@ -53,14 +57,12 @@ app.get("/api/protected", authMiddleware, (req, res) => {
   });
 });
 
-// START SERVER
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
-// Handle unexpected errors
 server.on("error", (error) => {
   console.error("Server error:", error);
 });
