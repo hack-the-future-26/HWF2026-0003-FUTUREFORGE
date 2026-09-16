@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API_URL = "http://localhost:5000";
+const API_URL = "https://hwf2026-0003-futureforge.onrender.com";
 
 function App() {
   const [user, setUser] = useState(() => {
